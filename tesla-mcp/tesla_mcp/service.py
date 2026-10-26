@@ -673,7 +673,7 @@ class TeslaService:
             pl = guards.load_places()["places"]
             origin = pl.get("home") or pl.get("work") or (next(iter(pl.values())) if pl else None)
             if origin is None:
-                return {**base, "reasonable": False, "reasons": ["Car location is unknown and no home/work origin is configured."]}
+                return {**out, "trip": {"title": title, "arrival_time": ev["start"], "destination": ev.get("location")}, "reasonable": False, "reasons": ["Car location is unknown and no home/work origin is configured."]}
             osrc = "configured home (car location unknown)"
         out["origin"] = osrc
         out["at_home_or_work"] = loc.get("at_home_or_work")

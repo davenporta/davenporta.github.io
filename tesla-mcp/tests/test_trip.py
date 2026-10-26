@@ -83,6 +83,15 @@ async def test_unknown_location_uses_home_origin(tsvc, fleet):
     assert r["reasonable"] is True and any("location unknown" in x for x in r["reasons"])
 
 
+async def test_unknown_location_and_no_places(tsvc, fleet, monkeypatch, tmp_path):
+    del fleet.data["drive_state"]["latitude"], fleet.data["drive_state"]["longitude"]
+    monkeypatch.setenv("TESLA_PLACES_FILE", str(tmp_path / "missing.json"))
+    monkeypatch.delenv("TESLA_HOME_LATLON", raising=False)
+    monkeypatch.delenv("TESLA_WORK_LATLON", raising=False)
+    r = await tsvc.next_trip_check(V, **DENT)
+    assert r["reasonable"] is False and "no home/work origin" in r["reasons"][0]
+
+
 async def test_latlon_skips_geocoder(tsvc):
     tsvc.geocode_fn = lambda q: pytest.fail("geocoder must not be called for lat/lon input")
     r = await tsvc.next_trip_check(V, ARR, latitude=42.33, longitude=-83.05)
