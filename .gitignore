@@ -1,0 +1,16 @@
+
+# Never commit secrets
+keys/
+*.pem
+!/.well-known/appspecific/com.tesla.3p.public-key.pem
+.env*
+tokens.json
+.tesla-mcp/
+proxy-config/
+*-key.pem
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+geocache.json
+places.json

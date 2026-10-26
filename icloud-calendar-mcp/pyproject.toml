@@ -1,0 +1,23 @@
+[project]
+name = "icloud-calendar-mcp"
+version = "0.1.0"
+description = "Self-hosted, strictly read-only MCP server for Apple iCloud calendars (CalDAV)"
+requires-python = ">=3.10"
+dependencies = ["mcp>=2.3,<3", "caldav>=1.3", "recurring-ical-events>=2.0", "icalendar>=5"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+icloud-calendar-mcp = "icloud_calendar_mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["icloud_calendar_mcp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

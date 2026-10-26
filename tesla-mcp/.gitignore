@@ -1,0 +1,10 @@
+keys/
+*.pem
+tokens.json
+.tesla-mcp/
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+pages-repo/
+proxy-config/
