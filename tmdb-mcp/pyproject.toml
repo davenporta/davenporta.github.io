@@ -1,0 +1,23 @@
+[project]
+name = "tmdb-mcp"
+version = "0.1.0"
+description = "Self-hosted, strictly read-only MCP server for TMDB TV show & streaming provider lookups (JustWatch data)"
+requires-python = ">=3.10"
+dependencies = ["mcp>=2.3,<3", "httpx>=0.27"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+tmdb-mcp = "tmdb_mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["tmdb_mcp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

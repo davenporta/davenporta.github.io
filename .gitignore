@@ -1,10 +1,13 @@
 
-# Never commit secrets
+# Never commit secrets or personal data
 keys/
 *.pem
 !/.well-known/appspecific/com.tesla.3p.public-key.pem
 .env*
 tokens.json
+store.json
+*.csv
+*.zip
 .tesla-mcp/
 proxy-config/
 *-key.pem
