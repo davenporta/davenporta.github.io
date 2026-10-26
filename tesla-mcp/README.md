@@ -35,7 +35,7 @@ Tesla's per-request billing, which the $10/month account discount covers for one
 | `add_precondition_schedule(vin, time_hhmm, days, latitude, longitude, enabled=true, one_time=false)` | recurring scheduled-departure preconditioning, e.g. `days=["WEEKDAYS"]`, `"07:30"` (firmware 2024.26+) | $0.001 |
 | `remove_precondition_schedule(vin, schedule_id)` | delete schedule | $0.001 |
 | `send_destination(vin, address? , latitude?, longitude?)` | send a destination to the car's nav (`navigation_request` share) | $0.001 |
-| `next_trip_check(vin, arrival_time, destination? , latitude?, longitude?, title?)` | caller-supplied destination (address or lat/lon) + arrival time (ISO; no offset = configured local timezone), e.g. taken from any calendar by the caller — this server reads no calendar → OSM geocode (cached) → OSRM drive time (fallback haversine×1.3 @55 mph) → `reasonable` to offer preconditioning? + suggested leave / precondition-start (leave − 15 min) and reasons. Read-only; never wakes | free, or $0.002 if online |
+| `next_trip_check(vin, arrival_time, destination? , latitude?, longitude?, title?)` | caller-supplied destination (address or lat/lon) + arrival time (ISO; no offset = configured local timezone), e.g. taken from any calendar by the caller — this server reads no calendar → OSM geocode (cached) → local haversine×1.3 @55 mph drive time by default (live vehicle GPS is never sent to public OSRM servers unless `TESLA_MCP_ALLOW_EXTERNAL_ROUTING=1`) → `reasonable` to offer preconditioning? + suggested leave / precondition-start (leave − 15 min) and reasons. Read-only; never wakes | free, or $0.002 if online |
 
 \*Free: `GET /vehicles`, `GET /vehicles/{vin}` (state), `fleet_status`, `recent_alerts`, `service_data`,
 `release_notes`. Paid: `vehicle_data` $0.002, commands $0.001, `wake_up` $0.02.
@@ -137,19 +137,19 @@ Wakes are the main cost driver. Let the car sleep.
 8. 👤 **Pair the virtual key with your car**: `python scripts/tesla_setup.py pairing-link --vin <VIN>`, open
    `https://tesla.com/_ak/<your-github-username>.github.io` on your phone (Tesla app 4.27.3+), near the car, and approve.
    (Remove it later from the car's **Controls → Locks** screen.)
-9. **Run the signed-command proxy** (required for climate/navigation commands). Build pinned v0.4.1 from source
+9. **Build the signed-command proxy** (required for climate/navigation commands). Build pinned v0.4.1 from source
    (`go install ...@v0.4.1` fails because of replace directives):
    ```bash
    git clone --depth 1 --branch v0.4.1 https://github.com/teslamotors/vehicle-command ~/src/vehicle-command
    (cd ~/src/vehicle-command && go build -o ~/.local/bin/tesla-http-proxy ./cmd/tesla-http-proxy)
    scripts/gen_proxy_tls.sh            # self-signed localhost/127.0.0.1 cert in proxy-config/ (git-ignored)
-   scripts/run_proxy.sh start          # 127.0.0.1:4443 only; start|stop|restart|status|foreground
+   scripts/run_proxy.sh status         # status|stop helper (proxy runs ephemerally on demand)
    ```
-   `run_proxy.sh` runs a restart-on-exit supervisor (setsid/nohup + flock) using `keys/private-key.pem`; logs and the
-   session cache go to `~/.local/state/tesla-mcp/` (proxy.log, rotated at 5 MB; no `-verbose`, so no bodies or tokens).
-   It never binds 0.0.0.0. `run_mcp.sh` starts it automatically if it isn't running (e.g. after a reboot).
+   `tesla-mcp` **does not** run `tesla-http-proxy` as a persistent 24/7 background daemon. Instead, `FleetClient._ephemeral_proxy()`
+   spawns `tesla-http-proxy` on `127.0.0.1:4443` (never `0.0.0.0`) using `keys/private-key.pem` **only** during an explicitly
+   confirmed signed command (`confirm: true`) and terminates it immediately afterward in a `finally:` block.
 10. **Add to your MCP client (stdio)**: the command is just `scripts/run_mcp.sh` (it sets the non-secret env from
-    `scripts/env.sh`, ensures the proxy is up, then execs `.venv/bin/tesla-mcp`):
+    `scripts/env.sh`, stops any stale proxy process, ensures the local proxy TLS cert exists, then execs `.venv/bin/tesla-mcp`):
     ```json
     {"mcpServers": {"tesla": {"command": "/workspace/tesla-mcp/scripts/run_mcp.sh",
       "env": {"TESLA_CLIENT_ID": "..."}}}}

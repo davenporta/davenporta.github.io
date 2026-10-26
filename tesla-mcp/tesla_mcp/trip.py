@@ -1,7 +1,8 @@
 """Read-only trip planning for "should I offer to precondition for the next commitment?".
 
 Free services only: Nominatim/OSM geocoding (cached in ~/.config/tesla-mcp/geocache.json, outside the repo; at most
-1 request/s per Nominatim policy) and the public OSRM demo router, falling back to haversine x 1.3 at ~55 mph.
+1 request/s per Nominatim policy) and local haversine x 1.3 at ~55 mph routing by default (live vehicle GPS is never sent
+to external OSRM servers unless TESLA_MCP_ALLOW_EXTERNAL_ROUTING=1 is explicitly set).
 Never talks to the car; never sends commands.
 """
 from __future__ import annotations
